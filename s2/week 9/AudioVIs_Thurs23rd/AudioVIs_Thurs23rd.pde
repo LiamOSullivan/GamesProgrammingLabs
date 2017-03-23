@@ -8,16 +8,17 @@ import ddf.minim.ugens.*;
 void setup()
 {
   size(1024, 512);
+  frameRate(25);
   minim = new Minim(this);
   // Use this if you want to read from the mic
   //ai = minim.getLineIn(Minim.STEREO, width, sampleRate, resolution);
   
   // Use this line if you want to load a file
-  ai = minim.loadSample("scale.wav", 1024);
+  ai = minim.loadSample("jingle.mp3", 512);
   
   halfHeight = height / 2;
   newBackColor();
-  fft = new FFT(width, sampleRate);
+  fft = new FFT(512, sampleRate);
 }
 
 void newBackColor()
@@ -63,7 +64,7 @@ void draw()
   // Plot the waveform
   for (int i = 0 ; i < ai.bufferSize() ; i ++)
   {
-    line(i, halfHeight, i, halfHeight + (ai.left.get(i) * halfHeight));
+    //line(i, halfHeight, i, halfHeight + (ai.left.get(i) * halfHeight));
     total += abs(ai.left.get(i));
   }
   float average = total / ai.bufferSize();
@@ -74,9 +75,10 @@ void draw()
   
   // You always need to do this
   fft.window(FFT.HAMMING);
-  fft.forward(ai.left);
+  fft.forward(ai.mix);
   
   stroke(0, 255, 255);
+  fill(255);
   
   // Find the bin with the maximum value. Every entry in the FFT array is called a bin
   float maxEnergy = 0;
@@ -93,16 +95,25 @@ void draw()
     line(i * 2, height, i * 2 + 1, height - (energy * 50));    
   }
   float freq = fft.indexToFreq(maxBin);
-  text("Frequency: " + freq, 10, 10);
+  if(frameCount%25==0){
+    printFreq = freq;
+  }
   
-  if (average > threshold)
+  text("Frequency: " + printFreq, 10, 10);
+  
+  if (average > threshold/4)
   {
-    y = lerp(y, map(freq, 400, 1200, height, 0), 0.1f);
+    newY = map(freq, 100, 1000, height, halfHeight);
+    y = lerp(y, newY, 0.1f);
   }
   stroke(255, 0, 0);
   fill(255, 0, 0);
   ellipse(50, y, 50, 50);
+  if(frameCount%25==0){
+    println(y+" : "+newY);
+  }
  
 }
 
-float y = 0;
+float y = height;
+float printFreq = -1, newY = height;;
